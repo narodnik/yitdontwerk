@@ -13,7 +13,7 @@ trait Bar {}
 impl Bar for Foo {}
 
 struct Blaa<'b> {
-    f: Vec<Box<dyn Fn(u32) -> Arc<dyn Bar>>>,
+    f: Vec<Box<dyn 'b + Fn(u32) -> Arc<dyn Bar>>>,
     _phantom: std::marker::PhantomData<&'b u32>
 }
 
@@ -25,18 +25,12 @@ impl<'b> Blaa<'b> {
         }
     }
 
-    fn register<'a, C>(&mut self, construct: C)
+    fn register<C>(&mut self, construct: C)
     where
-         C: 'a + Fn(u32) -> Arc<dyn Bar>,
-         'b: 'a
+         C: 'b + Fn(u32) -> Arc<dyn Bar>,
     {
         //This does not work
-        //self.f.push(Box::new(construct));
-    }
-
-    // This works
-    fn xx(&mut self, x: Box<dyn Fn(u32) -> Arc<dyn Bar>>) {
-        self.f.push(x);
+        self.f.push(Box::new(construct));
     }
 }
 
@@ -53,7 +47,6 @@ impl Bar for Other {
 
 fn main() {
     let mut b = Blaa::new();
-    //b.register(|x| Other::new(x, "sdds".to_string()));
-    //b.register(Foo::new);
-    b.xx(Box::new(Foo::new));
+    b.register(|x| Other::new(x, "sdds".to_string()));
+    b.register(Foo::new);
 }
