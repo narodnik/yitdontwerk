@@ -29,7 +29,6 @@ impl<'b> Blaa<'b> {
     where
          C: 'b + Fn(u32) -> Arc<dyn Bar>,
     {
-        //This does not work
         self.f.push(Box::new(construct));
     }
 }
