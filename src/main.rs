@@ -8,20 +8,22 @@ type ProtocolBasePtr = Arc<dyn ProtocolBase>;
 trait ProtocolBase {
 }
 
+// You cannot change this. This is fine.
 type Constructor = Box<dyn Fn(u32) -> BoxFuture<'static, ProtocolBasePtr> + Send + Sync>;
 
 struct ProtocolRegistry {
-    protocol_constructors: Mutex<Vec<Constructor>>
+    protocol_constructors: Vec<Constructor>
 }
 
 impl ProtocolRegistry {
-    async fn register<C, F>(&self, constructor: C)
+    // This makes no sense.
+    async fn register<C, F>(&mut self, constructor: C)
     where
         C: 'static + Fn(u32) -> F + Send + Sync,
         F: 'static + Future<Output=Arc<dyn ProtocolBase + 'static>> + Send
     {
         let constructor = Box::new(move |x| Box::pin(constructor(x)));
-        self.protocol_constructors.lock().await.push(constructor);
+        self.protocol_constructors.push(constructor);
     }
 }
 
