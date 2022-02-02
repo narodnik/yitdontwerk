@@ -12,11 +12,15 @@ trait ProtocolBase {
 struct ProtocolPing {
 }
 impl ProtocolPing {
-    async fn new() -> Arc<dyn ProtocolBase> {
+    async fn new(channel: Channel) -> Arc<dyn ProtocolBase> {
         Arc::new(Self {})
     }
 }
 impl ProtocolBase for ProtocolPing {
+}
+
+// This is a non-copyable dependency object for illustration purposes
+struct Channel {
 }
 
 // You cannot change this. This is fine.
@@ -40,11 +44,11 @@ impl ProtocolRegistry {
 
 // From the stackoverflow examples
 struct S {
-    foo: Box<dyn Fn(u8) -> BoxFuture<'static, u8> + Send + Sync>,
+    foo: Box<dyn Fn(Channel) -> BoxFuture<'static, Arc<dyn ProtocolBase>> + Send + Sync>,
 }
 
-fn foo(x: u8) -> BoxFuture<'static, u8> {
-    Box::pin(async move { x * 2 })
+fn foo(channel: Channel) -> BoxFuture<'static, Arc<dyn ProtocolBase>> {
+    Box::pin(async move { ProtocolPing::new(channel).await })
 }
 
 async fn foo_simple(x: u8) -> u8 {
@@ -55,6 +59,6 @@ fn main() {
     // This works
     let s = S { foo: Box::new(foo) };
     // This also
-    let s = S { foo: Box::new(move |x| Box::pin(foo_simple(x))) };
+    let s = S { foo: Box::new(move |channel| Box::pin(ProtocolPing::new(channel))) };
 }
 
