@@ -12,7 +12,7 @@ trait ProtocolBase {
 struct ProtocolPing {
 }
 impl ProtocolPing {
-    fn new(x: u8) -> Arc<dyn ProtocolBase> {
+    async fn new() -> Arc<dyn ProtocolBase> {
         Arc::new(Self {})
     }
 }
@@ -40,12 +40,11 @@ impl ProtocolRegistry {
 
 // From the stackoverflow examples
 struct S {
-    //foo: Box<dyn Fn(u8) -> BoxFuture<'static, u8> + Send + Sync>,
-    foo: Box<dyn Fn(u8) -> BoxFuture<'static, Arc<dyn ProtocolBase>> + Send + Sync>,
+    foo: Box<dyn Fn(u8) -> BoxFuture<'static, u8> + Send + Sync>,
 }
 
-fn foo(x: u8) -> BoxFuture<'static, Arc<dyn ProtocolBase>> {
-    Box::pin(async move { ProtocolPing::new(x) })
+fn foo(x: u8) -> BoxFuture<'static, u8> {
+    Box::pin(async move { x * 2 })
 }
 
 async fn foo_simple(x: u8) -> u8 {
@@ -56,6 +55,6 @@ fn main() {
     // This works
     let s = S { foo: Box::new(foo) };
     // This also
-    //let s = S { foo: Box::new(move |x| Box::pin(foo_simple(x))) };
+    let s = S { foo: Box::new(move |x| Box::pin(foo_simple(x))) };
 }
 
